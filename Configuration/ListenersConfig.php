@@ -21,25 +21,48 @@
  *  THE SOFTWARE.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+declare(strict_types=1);
 
-// use App\Module\Product\Type\Category\Id\CategoryUidConverter;
-// use BaksDev\Users\Entity\User;
-// use App\Module\Product\Entity;
-// use App\Module\Product\EntityListeners;
+namespace BaksDev\Nginx\Unit\Configuration;
 
-return static function (ContainerConfigurator $configurator) {
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
-    $services = $configurator->services()
-        ->defaults()
-        ->autowire()
-        ->autoconfigure()
-    ;
+final class ListenersConfig
+{
 
-    $NAMESPACE = 'BaksDev\Nginx\Unit\\';
+    public static function listeners(ArrayNodeDefinition|NodeDefinition $definition): void
+    {
+        $rootNode = $definition;
 
-    $MODULE = substr(__DIR__, 0, strpos(__DIR__, "Resources"));
+        $rootNode->fixXmlConfig('listener');
+        $rootArray = $rootNode->children();
 
-    $services->load($NAMESPACE, $MODULE)
-        ->exclude($MODULE.'{Configuration,Resources,Type,*DTO.php,*Message.php}');
-};
+        $listenerNode = $rootArray
+            ->arrayNode('listeners')
+            ->useAttributeAsKey('name')
+        ;
+
+
+        $listenerPrototype = $listenerNode->arrayPrototype();
+
+        $listenerPrototype
+            ->children()
+                ->arrayNode('tls')
+                    ->arrayPrototype()
+                        ->children()
+                            ->integerNode('cache_size')->defaultValue(10000)->end()
+                            ->integerNode('ttl')->defaultValue(600)->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
+        ;
+
+        $listenerPrototype->end();
+        $rootArray->end();
+
+    }
+
+
+}

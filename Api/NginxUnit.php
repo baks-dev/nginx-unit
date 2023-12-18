@@ -21,25 +21,51 @@
  *  THE SOFTWARE.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+declare(strict_types=1);
 
-// use App\Module\Product\Type\Category\Id\CategoryUidConverter;
-// use BaksDev\Users\Entity\User;
-// use App\Module\Product\Entity;
-// use App\Module\Product\EntityListeners;
+namespace BaksDev\Nginx\Unit\Api;
 
-return static function (ContainerConfigurator $configurator) {
+use JsonException;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-    $services = $configurator->services()
-        ->defaults()
-        ->autowire()
-        ->autoconfigure()
-    ;
+abstract class NginxUnit
+{
+    protected mixed $result;
 
-    $NAMESPACE = 'BaksDev\Nginx\Unit\\';
+    /**
+     * @throws JsonException
+     */
+    public function toArray(): array
+    {
+        return json_decode($this->result, true, 512, JSON_THROW_ON_ERROR);
+    }
 
-    $MODULE = substr(__DIR__, 0, strpos(__DIR__, "Resources"));
+    public function getContent(): string
+    {
+        return $this->result;
+    }
 
-    $services->load($NAMESPACE, $MODULE)
-        ->exclude($MODULE.'{Configuration,Resources,Type,*DTO.php,*Message.php}');
-};
+    public function outputConsole(?SymfonyStyle $io = null): void
+    {
+        $data = $this->toArray();
+
+        foreach($data as $type => $message)
+        {
+            if($type === 'success')
+            {
+                $io ? $io->success($message) : dump(sprintf('%s: %s', $type, $message));
+                break;
+            }
+
+            if($type === 'error')
+            {
+                $io ? $io->error($message) : dump(sprintf('%s: %s', $type, $message));
+                continue;
+            }
+
+            $io ? $io->text($message) : dump(sprintf('%s: %s', $type, $message));
+        }
+
+    }
+
+}

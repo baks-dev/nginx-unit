@@ -21,25 +21,41 @@
  *  THE SOFTWARE.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+namespace BaksDev\Nginx\Unit\Command;
 
-// use App\Module\Product\Type\Category\Id\CategoryUidConverter;
-// use BaksDev\Users\Entity\User;
-// use App\Module\Product\Entity;
-// use App\Module\Product\EntityListeners;
+use BaksDev\Nginx\Unit\Api\ReloadConfig;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-return static function (ContainerConfigurator $configurator) {
 
-    $services = $configurator->services()
-        ->defaults()
-        ->autowire()
-        ->autoconfigure()
-    ;
+#[AsCommand(
+    name: 'baks:nginx-unit:reload',
+    description: 'Обновляет конфигурацию сервера приложений',
+    aliases: ['baks:unit:reload']
+)]
+class NginxUnitReloadCommand extends Command
+{
+    private ReloadConfig $reloadConfig;
 
-    $NAMESPACE = 'BaksDev\Nginx\Unit\\';
+    public function __construct(
+        ReloadConfig $reloadConfig
+    )
+    {
+        parent::__construct();
+        $this->reloadConfig = $reloadConfig;
+    }
 
-    $MODULE = substr(__DIR__, 0, strpos(__DIR__, "Resources"));
 
-    $services->load($NAMESPACE, $MODULE)
-        ->exclude($MODULE.'{Configuration,Resources,Type,*DTO.php,*Message.php}');
-};
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $SymfonyStyle = new SymfonyStyle($input, $output);
+
+        $this->reloadConfig->reload()->outputConsole($SymfonyStyle);
+
+        return Command::SUCCESS;
+    }
+
+}

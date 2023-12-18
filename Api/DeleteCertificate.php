@@ -21,25 +21,22 @@
  *  THE SOFTWARE.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+declare(strict_types=1);
 
-// use App\Module\Product\Type\Category\Id\CategoryUidConverter;
-// use BaksDev\Users\Entity\User;
-// use App\Module\Product\Entity;
-// use App\Module\Product\EntityListeners;
+namespace BaksDev\Nginx\Unit\Api;
 
-return static function (ContainerConfigurator $configurator) {
+use Symfony\Component\Process\Process;
 
-    $services = $configurator->services()
-        ->defaults()
-        ->autowire()
-        ->autoconfigure()
-    ;
+final class DeleteCertificate extends NginxUnit
+{
+    public function delete(string $name): self
+    {
+        $process = Process::fromShellCommandline(sprintf("curl -X DELETE --unix-socket /var/run/control.unit.sock 'http://localhost/certificates/%s'", $name));
+        $process->setTimeout(10);
+        $process->run();
 
-    $NAMESPACE = 'BaksDev\Nginx\Unit\\';
+        $this->result = $process->getIterator($process::ITER_SKIP_ERR | $process::ITER_KEEP_OUTPUT)->current();
 
-    $MODULE = substr(__DIR__, 0, strpos(__DIR__, "Resources"));
-
-    $services->load($NAMESPACE, $MODULE)
-        ->exclude($MODULE.'{Configuration,Resources,Type,*DTO.php,*Message.php}');
-};
+        return $this;
+    }
+}

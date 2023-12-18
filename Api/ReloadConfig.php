@@ -21,25 +21,37 @@
  *  THE SOFTWARE.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+declare(strict_types=1);
 
-// use App\Module\Product\Type\Category\Id\CategoryUidConverter;
-// use BaksDev\Users\Entity\User;
-// use App\Module\Product\Entity;
-// use App\Module\Product\EntityListeners;
+namespace BaksDev\Nginx\Unit\Api;
 
-return static function (ContainerConfigurator $configurator) {
+use InvalidArgumentException;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Process\Process;
 
-    $services = $configurator->services()
-        ->defaults()
-        ->autowire()
-        ->autoconfigure()
-    ;
+final class ReloadConfig extends NginxUnit
+{
+    private const DOMAINS = __DIR__.'/../Resources/config';
 
-    $NAMESPACE = 'BaksDev\Nginx\Unit\\';
+    public function reload() : self
+    {
+        $realpath = realpath(self::DOMAINS.'/unit.json');
 
-    $MODULE = substr(__DIR__, 0, strpos(__DIR__, "Resources"));
+        if(!file_exists($realpath))
+        {
+            throw new InvalidArgumentException(sprintf('File not found: %s', self::DOMAINS.'/unit.json'));
+        }
 
-    $services->load($NAMESPACE, $MODULE)
-        ->exclude($MODULE.'{Configuration,Resources,Type,*DTO.php,*Message.php}');
-};
+        $process = Process::fromShellCommandline('curl -X PUT --data-binary @'.$realpath.' --unix-socket /var/run/control.unit.sock http://localhost/config/');
+        $process->setTimeout(5);
+        $process->run();
+
+        $this->result = $process->getIterator($process::ITER_SKIP_ERR | $process::ITER_KEEP_OUTPUT)->current();
+
+        return $this;
+    }
+
+
+    // curl -X GET --unix-socket /var/run/control.unit.sock http://localhost/status
+
+}

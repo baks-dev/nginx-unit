@@ -21,25 +21,35 @@
  *  THE SOFTWARE.
  */
 
-namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+declare(strict_types=1);
 
-// use App\Module\Product\Type\Category\Id\CategoryUidConverter;
-// use BaksDev\Users\Entity\User;
-// use App\Module\Product\Entity;
-// use App\Module\Product\EntityListeners;
+namespace BaksDev\Nginx\Unit\Api;
 
-return static function (ContainerConfigurator $configurator) {
+use InvalidArgumentException;
+use Symfony\Component\Process\Process;
 
-    $services = $configurator->services()
-        ->defaults()
-        ->autowire()
-        ->autoconfigure()
-    ;
+final class UpdateCertificate extends NginxUnit
+{
 
-    $NAMESPACE = 'BaksDev\Nginx\Unit\\';
+    /**
+     * @param string $cert - полный путь к файлу сертификата
+     * @param string $name
+     * @return $this
+     */
+    public function update(string $cert, string $name): self
+    {
+        if(!file_exists($cert))
+        {
+            throw new InvalidArgumentException(sprintf('Не найден файл сертификата: %s', $cert));
+        }
 
-    $MODULE = substr(__DIR__, 0, strpos(__DIR__, "Resources"));
+        $process = Process::fromShellCommandline(sprintf("curl -X PUT --data-binary @%s --unix-socket /var/run/control.unit.sock http://localhost/certificates/%s", $cert, $name));
+        $process->setTimeout(10);
+        $process->run();
 
-    $services->load($NAMESPACE, $MODULE)
-        ->exclude($MODULE.'{Configuration,Resources,Type,*DTO.php,*Message.php}');
-};
+        $this->result = $process->getIterator($process::ITER_SKIP_ERR | $process::ITER_KEEP_OUTPUT)->current();
+
+        return $this;
+    }
+
+}
