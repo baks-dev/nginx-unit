@@ -48,7 +48,6 @@ class NginxUnitReloadCommand extends Command
         $this->reloadConfig = $reloadConfig;
     }
 
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $SymfonyStyle = new SymfonyStyle($input, $output);
@@ -57,5 +56,4 @@ class NginxUnitReloadCommand extends Command
 
         return Command::SUCCESS;
     }
-
 }

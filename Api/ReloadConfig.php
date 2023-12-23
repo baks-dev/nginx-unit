@@ -27,26 +27,39 @@ namespace BaksDev\Nginx\Unit\Api;
 
 use InvalidArgumentException;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Process\Process;
 
 final class ReloadConfig extends NginxUnit
 {
-    private const DOMAINS = __DIR__.'/../Resources/config';
 
-    public function reload() : self
+    private string $project_dir;
+
+    public function __construct(#[Autowire('%kernel.project_dir%')] string $project_dir)
     {
-        $realpath = realpath(self::DOMAINS.'/unit.json');
+        $this->project_dir = $project_dir;
+    }
 
-        if(!file_exists($realpath))
+    public function reload(): self
+    {
+        $config = $this->project_dir.'/unit.json';
+
+        if(!file_exists($config))
         {
-            throw new InvalidArgumentException(sprintf('File not found: %s', self::DOMAINS.'/unit.json'));
+            throw new InvalidArgumentException(sprintf('File not found: %s', $config));
         }
 
-        $process = Process::fromShellCommandline('curl -X PUT --data-binary @'.$realpath.' --unix-socket /var/run/control.unit.sock http://localhost/config/');
+        $process = Process::fromShellCommandline('curl -X PUT --data-binary @'.$config.' --unix-socket /var/run/control.unit.sock http://localhost/config/');
         $process->setTimeout(5);
         $process->run();
 
         $this->result = $process->getIterator($process::ITER_SKIP_ERR | $process::ITER_KEEP_OUTPUT)->current();
+
+
+
+        $process = Process::fromShellCommandline('curl -X PUT "/var/log/unit.log" --unix-socket /var/run/control.unit.sock http://localhost/config/access_log');
+        $process->setTimeout(5);
+        $process->run();
 
         return $this;
     }

@@ -26,13 +26,16 @@ declare(strict_types=1);
 namespace BaksDev\Nginx\Unit\Process;
 
 use InvalidArgumentException;
+use phpDocumentor\Reflection\Types\This;
 use RuntimeException;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 final class CertbotWebroot
 {
     private ?string $domain = null;
+
     private ?string $path = null;
 
     private bool $successful = true;
@@ -66,7 +69,7 @@ final class CertbotWebroot
             throw new InvalidArgumentException('Необходимо добавить домены для сертификации');
         }
 
-        $process = new Process(['certbot', 'certonly', '--force-renewal', '--webroot', '-w', $this->path, '-d', $this->domain]);
+        $process = new Process(['certbot', 'certonly', '--force-renewal', '--webroot', '-w', $this->path.'public/', '-d', $this->domain]);
         $process->start();
 
         if(!$io)
@@ -90,32 +93,24 @@ final class CertbotWebroot
         $this->successful = $process->isSuccessful();
 
         return $this;
-
     }
 
-    /**
-     * Certbot
-     */
-    public function isSuccessful(): bool
-    {
-        return $this->successful;
-    }
+
+
 
 
     /**
      * Сохраняет сертификат. Если не передан путь для сохранения - сохраняет в директорию домена
      */
-    public function saveCertificate(?string $name = null): self
+    public function saveCertificate(): self
     {
-        if(!$this->successful)
-        {
-            return $this;
-        }
-
         if(empty($this->domain))
         {
             throw new InvalidArgumentException('Необходимо указать домены для сертификации');
         }
+
+
+        dump(sprintf('Сохраняем сертификат в директорию домена %s', $this->domain));
 
         $fullChain = sprintf('/etc/letsencrypt/live/%s/fullchain.pem', $this->domain);
         $privateKey = sprintf('/etc/letsencrypt/live/%s/privkey.pem', $this->domain);
@@ -123,37 +118,52 @@ final class CertbotWebroot
 
         if(!file_exists($fullChain))
         {
-            throw new InvalidArgumentException(sprintf('Не найден файл сертификата: %s', $fullChain));
+            throw new InvalidArgumentException(sprintf('Не найден файл сертификата letsencrypt FULLCHAIN: %s', $fullChain));
         }
 
         if(!file_exists($privateKey))
         {
-            throw new InvalidArgumentException(sprintf('Не найден файл сертификата: %s', $privateKey));
+            throw new InvalidArgumentException(sprintf('Не найден файл сертификата letsencrypt PRIVKEY: %s', $privateKey));
         }
-
-        /* Если не передан путь для сохранения - сохраняем в директорию домена */
-        $name = $name ?: $this->path.$this->domain.'.pem';
-
-        $stream = fopen($name, 'w+');
 
         $process = new Process(['cat', $fullChain, $privateKey]);
-        $process->setInput($stream);
         $process->start();
 
-        foreach($process as $type => $data)
-        {
-            if($process::OUT === $type)
-            {
-                fwrite($stream, $data);
-            }
-            else
-            {
-                throw new RuntimeException($data);
+        $dump = null;
+
+        foreach ($process as $type => $data) {
+            if ($process::OUT === $type) {
+                $dump .= $data;
             }
         }
 
-        fclose($stream);
+        $process->wait();
+
+        if($dump)
+        {
+            $this->dumpFile($dump);
+            dump(sprintf('Сохранили сертификат %s', $this->path.$this->domain));
+        }
+        else
+        {
+            dump(sprintf('НЕвозможно сохранить сертификат %s', $this->path.$this->domain));
+        }
+
 
         return $this;
     }
+
+
+    public function isSuccessful(): bool
+    {
+        return $this->successful;
+    }
+
+    private function dumpFile(string $dump): void
+    {
+        $filesystem = new Filesystem();
+        $name = $this->path.$this->domain.'.pem';
+        $filesystem->dumpFile($name, $dump);
+    }
+
 }

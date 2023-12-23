@@ -29,6 +29,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 
@@ -41,14 +42,16 @@ class NginxUnitConfigCommand extends Command
 {
     private ParameterBagInterface $parameter;
 
-    private const DOMAINS = __DIR__.'/../Resources/config';
+    private string $project_dir;
 
     public function __construct(
+        #[Autowire('%kernel.project_dir%')] string $project_dir,
         ParameterBagInterface $parameter
     )
     {
         parent::__construct();
         $this->parameter = $parameter;
+        $this->project_dir = $project_dir;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -57,16 +60,11 @@ class NginxUnitConfigCommand extends Command
 
         $data = $this->parameter->get('baks.nginx.unit');
 
-
-
-
         /** Основные настройки */
         $config["settings"]["http"] = $data['settings'];
 
 
         $routes = 0;
-
-
         $isHttps = false;
 
         /** Listeners */
@@ -77,30 +75,35 @@ class NginxUnitConfigCommand extends Command
 
             if(!empty($listener['tls']))
             {
+                $config["listeners"][$key] = ["pass" => "routes"];
+
                 $isHttps = true;
 
                 $cache = current($listener['tls']);
 
+                $hosts = [];
+
+                foreach($data['domains'] as $domain => $headers)
+                {
+                    $hosts[] = $domain;
+
+                    foreach($headers['subdomains'] as $subdomain)
+                    {
+                        $hosts[] = $subdomain;
+                    }
+                }
+
                 $config["listeners"][$key]['tls'] =
                     [
-                        "certificate" => array_keys($data['domains']),
+                        "certificate" => $hosts,
                         "session" => [
                             "cache_size" => $cache['cache_size'],
                             "timeout" => $cache['ttl'],
                             "tickets" => true
                         ],
                     ];
-
-                /** Создаем роутинг для верификации Let's Encrypt */
-                $config["routes"][$routes]['match']['uri'] = "/.well-known/acme-challenge/*";
-                $config["routes"][$routes]['action']['share'] = '/home/$host/public';
-                $routes++;
-
             }
         }
-
-
-
 
         /** Запрет доступа пользовательских IP */
         if(!empty($data['dany']['ips']))
@@ -112,7 +115,7 @@ class NginxUnitConfigCommand extends Command
 
         /** Запрет доступа при обращении к хосту (домену или ip домена) */
         if(!empty($data['dany']['hosts']))
-        {
+        { //"scheme": "http"
             $config["routes"][$routes]['match']['host'] = $data['dany']['hosts'];
             $config["routes"][$routes]['action']['return'] = 403;
             $routes++;
@@ -128,17 +131,35 @@ class NginxUnitConfigCommand extends Command
             $routes++;
         }
 
-
         if($isHttps)
         {
+
+            /** Создаем роутинг для верификации Let's Encrypt */
+            foreach($data['domains'] as $domain => $headers)
+            {
+                $hosts = [];
+                $hosts[] = $domain;
+
+                foreach($headers['subdomains'] as $subdomain)
+                {
+                    $hosts[] = $subdomain;
+                }
+
+                $config["routes"][$routes]['match']['host'] = $hosts;
+                $config["routes"][$routes]['match']['scheme'] = 'http';
+                $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
+                $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public/.well-known/acme-challenge/';
+                $routes++;
+            }
+
+
+            /** Добавляем редирект на https */
             $config["routes"][$routes]['match']['scheme'] = 'http';
             $config["routes"][$routes]['action']['return'] = 301;
             $config["routes"][$routes]['action']['location'] = 'https://$host';
 
             $routes++;
         }
-
-
 
 
         /** Определяем статические ресурсы */
@@ -157,8 +178,6 @@ class NginxUnitConfigCommand extends Command
 
             $routes++;
         }
-
-
 
 
         foreach($data['domains'] as $domain => $headers)
@@ -191,7 +210,8 @@ class NginxUnitConfigCommand extends Command
         }
 
 
-        $handle = fopen(self::DOMAINS.'/unit.json', "w");
+
+        $handle = fopen($this->project_dir.'/unit.json', "w");
         fwrite($handle, json_encode($config));
         fclose($handle);
 

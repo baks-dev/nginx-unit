@@ -35,7 +35,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 
 #[AsCommand(
     name: 'baks:nginx-unit:certificate',
@@ -60,6 +62,7 @@ class NginxUnitCertificateCommand extends Command
     )
     {
         parent::__construct();
+
         $this->parameter = $parameter;
         $this->reloadConfig = $reloadConfig;
         $this->deleteCertificate = $deleteCertificate;
@@ -91,10 +94,17 @@ class NginxUnitCertificateCommand extends Command
         }
 
         $currentDate = new DateTimeImmutable();
+        $filesystem = new Filesystem();
 
         foreach($data['domains'] as $domain => $headers)
         {
+
             $path = $data['path'].'/'.$domain.'/';
+
+            /* Создаем директорию letsencrypt */
+            $filesystem->mkdir($path.'public/.well-known/acme-challenge');
+
+            /* Путь к сохранению сертификата */
             $cert = $path.$domain.'.pem';
 
             if(file_exists($cert))
@@ -119,15 +129,22 @@ class NginxUnitCertificateCommand extends Command
 
             if($webroot->isSuccessful())
             {
+                /* Сохраняем файл сертификата */
                 $this->certbotWebroot->saveCertificate();
 
                 /* Удаляем старый сертификат из настроек Unit */
-                $this->deleteCertificate->delete($domain)->outputConsole($io);
+                $this->deleteCertificate->delete($domain);
 
                 /* Присваиваем новый сертификат настройкам Unit */
                 $this->updateCertificate->update($cert, $domain)->outputConsole($io);
-            }
 
+            }
+        }
+
+
+        foreach($data['domains'] as $domain => $headers)
+        {
+            $path = $data['path'].'/'.$domain.'/';
 
             foreach($headers['subdomains'] as $subdomain)
             {
@@ -147,6 +164,9 @@ class NginxUnitCertificateCommand extends Command
 
                 $io->text(sprintf('Обновляем сертификат %s', $subdomain));
 
+                //                dump($subdomain);
+                //                dd($path.'public');
+
                 /* Обновляем сертификат Let's Encrypt */
                 $webroot = $this->certbotWebroot
                     ->setPath($path)
@@ -155,17 +175,18 @@ class NginxUnitCertificateCommand extends Command
 
                 if($webroot->isSuccessful())
                 {
+                    /* Сохраняем файл сертификата */
                     $this->certbotWebroot->saveCertificate();
 
                     /* Удаляем старый сертификат из настроек Unit */
-                    $this->deleteCertificate->delete($subdomain)->outputConsole($io);
+                    $this->deleteCertificate->delete($subdomain);
 
                     /* Присваиваем новый сертификат настройкам Unit */
                     $this->updateCertificate->update($cert, $subdomain)->outputConsole($io);
                 }
             }
-        }
 
+        }
 
         $this->reloadConfig->reload()->outputConsole($io);
 
@@ -173,7 +194,7 @@ class NginxUnitCertificateCommand extends Command
     }
 
 
-    public function actualMessage(string $path, string $domain, DateTimeImmutable $modify, SymfonyStyle $io): void
+    private function actualMessage(string $path, string $domain, DateTimeImmutable $modify, SymfonyStyle $io): void
     {
         $cert = $path.$domain.'.pem';
 
@@ -191,5 +212,7 @@ class NginxUnitCertificateCommand extends Command
 
         $io->text('1. '.$commandCertbot);
         $io->text('2. '.$commandCat);
+
     }
+
 }
