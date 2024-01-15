@@ -87,36 +87,4 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
         ;
     }
 
-
-//    public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
-//    {
-//
-//        dump('loadExtension');
-//
-////        $container
-////            ->services()
-////            ->get('baks_dev_nginx_unit')
-////            ->class(BaksDevNginxUnitConfig::class)
-////        ;
-//
-//        // load an XML, PHP or Yaml file
-//        //$containerConfigurator->import('../config/services.xml');
-//
-//        // you can also add or replace parameters and services
-////        $containerConfigurator->parameters()
-////            ->set('acme_hello.phrase', $config['phrase'])
-////        ;
-//
-////        if ($config['scream']) {
-////            $containerConfigurator->services()
-////                ->get('acme_hello.printer')
-////                ->class(ScreamingPrinter::class)
-////            ;
-////        }
-//    }
-
-//    public function getContainerExtension(): ?ExtensionInterface
-//    {
-//        return new BaksDevNginxUnitExtension();
-//    }
 }
