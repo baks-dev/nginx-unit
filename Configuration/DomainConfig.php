@@ -43,8 +43,26 @@ final class DomainConfig
             ->useAttributeAsKey('name')
         ;
 
-
         $domainPrototype = $domainNode->arrayPrototype();
+
+
+        $domainPrototype
+            ->children()
+            ->scalarNode('email')
+            ->defaultValue('example@local.ru')
+            ->end()
+            ->end()
+        ;
+
+        //dd(654564);
+
+//        $domainPrototype
+//            ->fixXmlConfig('header')
+//
+//            ->scalarNode('email')
+//            ->info('Email для регистрации сертификатов')
+//            ->defaultValue('example')
+//            ->end();
 
 
 
@@ -55,7 +73,6 @@ final class DomainConfig
                     ->scalarPrototype()->end()
                 ->end()
             ->end()
-
         ;
 
         $domainPrototype

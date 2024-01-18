@@ -82,28 +82,34 @@ class NginxUnitCertificateCommand extends Command
             return Command::SUCCESS;
         }
 
-        $isTls = false;
-
-        foreach($data['listeners'] as $listener)
-        {
-            if(!empty($listener['tls']))
-            {
-                $isTls = true;
-                break;
-            }
-        }
-
-        if(!$isTls)
-        {
-            $io->warning('Не найдено настроек сертификатов');
-            return Command::SUCCESS;
-        }
+//        $isTls = false;
+//
+//        foreach($data['listeners'] as $listener)
+//        {
+//            if(!empty($listener['tls']))
+//            {
+//                $isTls = true;
+//                break;
+//            }
+//        }
+//
+//        if(!$isTls)
+//        {
+//            $io->warning('Не найдено настроек сертификатов');
+//            return Command::SUCCESS;
+//        }
 
         $currentDate = new DateTimeImmutable();
         $filesystem = new Filesystem();
 
+
         foreach($data['domains'] as $domain => $headers)
         {
+            if($headers['email'] === 'example@local.ru')
+            {
+                $io->warning($domain.': Необходимо указать действующий email для регистрации сертификата LetsEncrypt');
+                return Command::SUCCESS;
+            }
 
             $path = $data['path'].'/'.$domain.'/';
 
@@ -131,6 +137,7 @@ class NginxUnitCertificateCommand extends Command
             $webroot = $this->certbotWebroot
                 ->setPath($path)
                 ->domain($domain)
+                ->email($headers['email'])
                 ->hande($io);
 
             if($webroot->isSuccessful())
@@ -154,6 +161,12 @@ class NginxUnitCertificateCommand extends Command
 
             foreach($headers['subdomains'] as $subdomain)
             {
+                if($headers['email'] === 'example@local.ru')
+                {
+                    $io->warning($domain.': Необходимо указать действующий email для регистрации сертификата LetsEncrypt');
+                    return Command::SUCCESS;
+                }
+
                 $cert = $path.$subdomain.'.pem';
 
                 if(file_exists($cert))
@@ -177,6 +190,7 @@ class NginxUnitCertificateCommand extends Command
                 $webroot = $this->certbotWebroot
                     ->setPath($path)
                     ->domain($subdomain)
+                    ->email($headers['email'])
                     ->hande($io);
 
                 if($webroot->isSuccessful())

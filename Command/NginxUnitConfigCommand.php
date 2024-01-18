@@ -76,6 +76,7 @@ class NginxUnitConfigCommand extends Command
 
         /** Listeners */
         $config["listeners"] = [];
+
         foreach($data['listeners'] as $key => $listener)
         {
             $config["listeners"][$key] = ["pass" => "routes"];

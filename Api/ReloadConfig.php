@@ -56,7 +56,6 @@ final class ReloadConfig extends NginxUnit
         $this->result = $process->getIterator($process::ITER_SKIP_ERR | $process::ITER_KEEP_OUTPUT)->current();
 
 
-
         $process = Process::fromShellCommandline('curl -X PUT "/var/log/unit.log" --unix-socket /var/run/control.unit.sock http://localhost/config/access_log');
         $process->setTimeout(5);
         $process->run();

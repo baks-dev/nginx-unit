@@ -36,6 +36,8 @@ final class CertbotWebroot
 {
     private ?string $domain = null;
 
+    private ?string $email = null;
+
     private ?string $path = null;
 
     private bool $successful = true;
@@ -54,6 +56,17 @@ final class CertbotWebroot
         return $this;
     }
 
+    public function email(string $email): self
+    {
+        if(!filter_var($email, FILTER_VALIDATE_EMAIL))
+        {
+            throw new InvalidArgumentException('Неверный формат email');
+        }
+
+        $this->email = $email;
+        return $this;
+    }
+
 
     /** Метод получает сертификаты  */
 
@@ -69,7 +82,12 @@ final class CertbotWebroot
             throw new InvalidArgumentException('Необходимо добавить домены для сертификации');
         }
 
-        $process = new Process(['certbot', 'certonly', '--force-renewal', '--webroot', '-w', $this->path.'public/', '-d', $this->domain]);
+        if(!$this->email)
+        {
+            throw new InvalidArgumentException('Необходимо указать email для сертификации');
+        }
+
+        $process = new Process(['certbot', 'certonly', '--force-renewal', '--webroot', '-w', $this->path.'public/', '--email', $this->email, '-d', $this->domain]);
         $process->start();
 
         if(!$io)
