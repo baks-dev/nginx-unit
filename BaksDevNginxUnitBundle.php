@@ -79,11 +79,9 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
             {
                 $config['settings']['max_body_size'] *= 1048576;
             }
-
-            $container->parameters()->set('baks.nginx.unit', $config);
         }
 
-
+        $container->parameters()->set('baks.nginx.unit', $config);
     }
 
 }
