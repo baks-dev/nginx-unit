@@ -48,6 +48,9 @@ final class StaticConfig
         //$settingsArray = $staticNode->children();
 
 
+
+
+
         $typePrototype = $staticNode->arrayPrototype();
 
         $typePrototype
@@ -60,6 +63,25 @@ final class StaticConfig
 
         ;
 
+
+        $typePrototype
+            ->children()
+            ->scalarNode('domain')
+            ->end()
+            ->end()
+        ;
+
+
+        $typePrototype
+            ->fixXmlConfig('subdomain')
+            ->children()
+            ->arrayNode('subdomains')
+            ->scalarPrototype()->end()
+            ->end()
+            ->end()
+        ;
+
+
         $typePrototype
             ->fixXmlConfig('header')
             ->children()
@@ -67,7 +89,6 @@ final class StaticConfig
             ->scalarPrototype()->end()
             ->end()
             ->end()
-
         ;
 
 

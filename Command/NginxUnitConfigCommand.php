@@ -26,11 +26,17 @@ namespace BaksDev\Nginx\Unit\Command;
 use BaksDev\Nginx\Unit\BaksDevNginxUnitBundle;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\ProgressIndicator;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Process\Process;
 
 
 #[AsCommand(
@@ -66,6 +72,7 @@ class NginxUnitConfigCommand extends Command
             return Command::SUCCESS;
         }
 
+        $io->text('Сбрасываем кеш файла конфигурации сервера Unit ...');
 
         /** Основные настройки */
         $config["settings"]["http"] = $data['settings'];
@@ -141,32 +148,22 @@ class NginxUnitConfigCommand extends Command
 
         /**  Создаем роутинг для верификации Let's Encrypt */
 
-        $config["routes"][$routes]['match']['scheme'] = 'http';
-        $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
-        $config["routes"][$routes]['action']['share'] = $data['path'].'/$host/public$uri';
-        $routes++;
+        foreach($data['domains'] as $domain => $headers)
+        {
+            $hosts = [];
+            $hosts[] = $domain;
 
+            foreach($headers['subdomains'] as $subdomain)
+            {
+                $hosts[] = $subdomain;
+            }
 
-//        foreach($data['domains'] as $domain => $headers)
-//        {
-//            $hosts = [];
-//            $hosts[] = $domain;
-//
-//            foreach($headers['subdomains'] as $subdomain)
-//            {
-//                $hosts[] = $subdomain;
-//            }
-//
-//            $config["routes"][$routes]['match']['host'] = $hosts;
-//            $config["routes"][$routes]['match']['scheme'] = 'http';
-//            $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
-//            $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public/.well-known/acme-challenge/';
-//            $routes++;
-//        }
-
-
-
-
+            $config["routes"][$routes]['match']['host'] = count($hosts) === 1 ? current($hosts) : $hosts;
+            $config["routes"][$routes]['match']['scheme'] = 'http';
+            $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
+            $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public$uri';
+            $routes++;
+        }
 
 
         if($isHttps)
@@ -179,15 +176,26 @@ class NginxUnitConfigCommand extends Command
             $routes++;
         }
 
-
         /** Определяем статические ресурсы */
-        foreach($data['static'] as $key => $static)
+        foreach($data['static'] as $static)
         {
+
+            $hosts = [];
+            $hosts[] = $static['domain'];
+
+            foreach($static['subdomains'] as $subdomain)
+            {
+                $hosts[] = $subdomain;
+            }
+
+            $config["routes"][$routes]['match']['host'] = count($hosts) === 1 ? current($hosts) : $hosts;
+
             $config["routes"][$routes]['match']['uri'] = array_map(function($item) {
                 return '*.'.$item;
             }, $static['types']);
 
-            $config["routes"][$routes]['action']['share'] = $data['path'].'/$host/public$uri';
+
+            $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$static['domain'].'/public$uri';
 
             if(!empty($static['headers']))
             {
@@ -196,6 +204,9 @@ class NginxUnitConfigCommand extends Command
 
             $routes++;
         }
+
+
+
 
 
         foreach($data['domains'] as $domain => $headers)
@@ -208,7 +219,7 @@ class NginxUnitConfigCommand extends Command
                 $hosts[] = $subdomain;
             }
 
-            $config["routes"][$routes]['match']['host'] = $hosts;
+            $config["routes"][$routes]['match']['host'] = count($hosts) === 1 ? current($hosts) : $hosts;
             $config["routes"][$routes]['action']['pass'] = 'applications/'.$domain;
 
             if(!empty($headers['headers']))
@@ -227,13 +238,30 @@ class NginxUnitConfigCommand extends Command
             $routes++;
         }
 
-
-
         $handle = fopen($this->project_dir.'/unit.json', "w");
         fwrite($handle, json_encode($config));
         fclose($handle);
 
+        $process = new Process(['php', 'bin/console', 'cache:clear']);
+        $process->start();
+
+
+//        /** Индикатор процесса ... */
+//
+//        $progressIndicator = new ProgressIndicator($output, 'normal', 100, ['⠏', '⠛', '⠹', '⢸', '⣰', '⣤', '⣆', '⡇']);
+//        $progressIndicator->start('Processing...');
+//
+//        $i = 0;
+//        while ($i++ < 10) {
+//            $progressIndicator->advance();
+//            sleep(1);
+//        }
+//
+//        $progressIndicator->finish('Finished');
+
         $io->success('Файл конфигурации сервера Unit успешно обновлен');
+
+        $io->warning('На сброс кеша файла конфигурации Unit может потребоваться некоторое время!');
 
         return Command::SUCCESS;
     }
