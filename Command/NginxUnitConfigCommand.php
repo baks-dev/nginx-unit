@@ -140,22 +140,33 @@ class NginxUnitConfigCommand extends Command
         }
 
         /**  Создаем роутинг для верификации Let's Encrypt */
-        foreach($data['domains'] as $domain => $headers)
-        {
-            $hosts = [];
-            $hosts[] = $domain;
 
-            foreach($headers['subdomains'] as $subdomain)
-            {
-                $hosts[] = $subdomain;
-            }
+        $config["routes"][$routes]['match']['scheme'] = 'http';
+        $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
+        $config["routes"][$routes]['action']['share'] = $data['path'].'/$host/public$uri';
+        $routes++;
 
-            $config["routes"][$routes]['match']['host'] = $hosts;
-            $config["routes"][$routes]['match']['scheme'] = 'http';
-            $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
-            $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public/.well-known/acme-challenge/';
-            $routes++;
-        }
+
+//        foreach($data['domains'] as $domain => $headers)
+//        {
+//            $hosts = [];
+//            $hosts[] = $domain;
+//
+//            foreach($headers['subdomains'] as $subdomain)
+//            {
+//                $hosts[] = $subdomain;
+//            }
+//
+//            $config["routes"][$routes]['match']['host'] = $hosts;
+//            $config["routes"][$routes]['match']['scheme'] = 'http';
+//            $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
+//            $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public/.well-known/acme-challenge/';
+//            $routes++;
+//        }
+
+
+
+
 
 
         if($isHttps)
