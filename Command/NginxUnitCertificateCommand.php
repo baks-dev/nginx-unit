@@ -76,6 +76,12 @@ class NginxUnitCertificateCommand extends Command
 
         $data = $this->parameter->get('baks.nginx.unit');
 
+        if(!isset($data['listeners']))
+        {
+            $io->warning('Файл конфигурации сервера Unit Listeners не найден');
+            return Command::SUCCESS;
+        }
+
         $isTls = false;
 
         foreach($data['listeners'] as $listener)

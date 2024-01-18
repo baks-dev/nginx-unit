@@ -59,6 +59,12 @@ class NginxUnitRestartCommand extends Command
 
         $data = $this->parameter->get('baks.nginx.unit');
 
+        if(!isset($data['domains']))
+        {
+            $io->warning('Файл конфигурации сервера Unit Domains не найден');
+            return Command::SUCCESS;
+        }
+
         foreach($data['domains'] as $domain => $headers)
         {
             $this->restartApplication->restart($domain)->outputConsole($io);

@@ -60,6 +60,13 @@ class NginxUnitConfigCommand extends Command
 
         $data = $this->parameter->get('baks.nginx.unit');
 
+        if(!isset($data['settings']))
+        {
+            $io->warning('Файл конфигурации сервера Unit не найден');
+            return Command::SUCCESS;
+        }
+
+
         /** Основные настройки */
         $config["settings"]["http"] = $data['settings'];
 
