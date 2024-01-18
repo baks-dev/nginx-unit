@@ -72,19 +72,18 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
 
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        /* конвертируем пользовательские мегабайты в байты */
-        $config['settings']['max_body_size'] *= 1048576;
-        $container->parameters()->set('baks.nginx.unit', $config)
-        //dump($container);
+        if(isset($config['settings']))
+        {
+            /* конвертируем пользовательские мегабайты в байты */
+            if(isset($config['settings']['max_body_size']))
+            {
+                $config['settings']['max_body_size'] *= 1048576;
+            }
+
+            $container->parameters()->set('baks.nginx.unit', $config);
+        }
 
 
-        // В отличие от класса Extension, переменная "$config" уже прошла слияние и
-        // обработку. Вы можете использовать её напрямую, что сконфигурировать сервис-контейнер.
-//        $container->services()
-//            ->get('baks_dev_nginx_unit')
-            //->arg(0, $config['twitter']['client_id'])
-            //->arg(1, $config['twitter']['client_secret'])
-        ;
     }
 
 }
