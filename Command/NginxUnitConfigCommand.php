@@ -139,28 +139,27 @@ class NginxUnitConfigCommand extends Command
             $routes++;
         }
 
-        if($isHttps)
+        /**  Создаем роутинг для верификации Let's Encrypt */
+        foreach($data['domains'] as $domain => $headers)
         {
+            $hosts = [];
+            $hosts[] = $domain;
 
-            /** Создаем роутинг для верификации Let's Encrypt */
-            foreach($data['domains'] as $domain => $headers)
+            foreach($headers['subdomains'] as $subdomain)
             {
-                $hosts = [];
-                $hosts[] = $domain;
-
-                foreach($headers['subdomains'] as $subdomain)
-                {
-                    $hosts[] = $subdomain;
-                }
-
-                $config["routes"][$routes]['match']['host'] = $hosts;
-                $config["routes"][$routes]['match']['scheme'] = 'http';
-                $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
-                $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public/.well-known/acme-challenge/';
-                $routes++;
+                $hosts[] = $subdomain;
             }
 
+            $config["routes"][$routes]['match']['host'] = $hosts;
+            $config["routes"][$routes]['match']['scheme'] = 'http';
+            $config["routes"][$routes]['match']['uri'] = '/.well-known/acme-challenge/*';
+            $config["routes"][$routes]['action']['share'] = $data['path'].'/'.$domain.'/public/.well-known/acme-challenge/';
+            $routes++;
+        }
 
+
+        if($isHttps)
+        {
             /** Добавляем редирект на https */
             $config["routes"][$routes]['match']['scheme'] = 'http';
             $config["routes"][$routes]['action']['return'] = 301;
