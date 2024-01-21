@@ -28,16 +28,22 @@ namespace BaksDev\Nginx\Unit\Api;
 use InvalidArgumentException;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Process\Process;
 
 final class ReloadConfig extends NginxUnit
 {
 
     private string $project_dir;
+    private ParameterBagInterface $parameter;
 
-    public function __construct(#[Autowire('%kernel.project_dir%')] string $project_dir)
+    public function __construct(
+        #[Autowire('%kernel.project_dir%')] string $project_dir,
+        ParameterBagInterface $parameter,
+    )
     {
         $this->project_dir = $project_dir;
+        $this->parameter = $parameter;
     }
 
     public function reload(): self
@@ -49,6 +55,22 @@ final class ReloadConfig extends NginxUnit
             throw new InvalidArgumentException(sprintf('File not found: %s', $config));
         }
 
+
+
+
+        /** модуль JS */
+//        $data = $this->parameter->get('baks.nginx.unit');
+
+//        $process = Process::fromShellCommandline('curl -X DELETE --unix-socket /var/run/control.unit.sock http://localhost/js_modules/csp');
+//        $process->setTimeout(10);
+//        $process->run();
+//
+//        $process = Process::fromShellCommandline('curl -X PUT --data-binary @'.$data['js_module'].' --unix-socket /var/run/control.unit.sock http://localhost/js_modules/csp');
+//        $process->setTimeout(5);
+//        $process->run();
+
+
+        /** применяем конфиг */
         $process = Process::fromShellCommandline('curl -X PUT --data-binary @'.$config.' --unix-socket /var/run/control.unit.sock http://localhost/config/');
         $process->setTimeout(5);
         $process->run();
@@ -56,14 +78,12 @@ final class ReloadConfig extends NginxUnit
         $this->result = $process->getIterator($process::ITER_SKIP_ERR | $process::ITER_KEEP_OUTPUT)->current();
 
 
+        /** логи запросов */
         $process = Process::fromShellCommandline('curl -X PUT "/var/log/unit.log" --unix-socket /var/run/control.unit.sock http://localhost/config/access_log');
         $process->setTimeout(5);
         $process->run();
 
         return $this;
     }
-
-
-    // curl -X GET --unix-socket /var/run/control.unit.sock http://localhost/status
 
 }

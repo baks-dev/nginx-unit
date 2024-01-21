@@ -79,6 +79,8 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
             {
                 $config['settings']['max_body_size'] *= 1048576;
             }
+
+            //$config['js_module'] = __DIR__.'/Resources/module/csp.js';
         }
 
         $container->parameters()->set('baks.nginx.unit', $config);

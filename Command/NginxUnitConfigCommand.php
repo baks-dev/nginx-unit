@@ -75,8 +75,10 @@ class NginxUnitConfigCommand extends Command
         $io->text('Сбрасываем кеш файла конфигурации сервера Unit ...');
 
         /** Основные настройки */
-        $config["settings"]["http"] = $data['settings'];
+        $config['settings']['http'] = $data['settings'];
 
+        // js_module
+        //$config['settings']['js_module'] = 'csp';
 
         $routes = 0;
         $isHttps = false;
