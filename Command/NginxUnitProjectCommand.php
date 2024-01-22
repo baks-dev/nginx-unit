@@ -124,12 +124,24 @@ class NginxUnitProjectCommand extends Command
             return Command::SUCCESS;
         }
 
-        $this->filesystem->mkdir($this->new_project_dir, 0700);
-        $this->filesystem->mkdir($this->new_project_dir.'/templates', 0700);
+        $this->filesystem->mkdir($this->new_project_dir, 0755);
 
 
-        $this->filesystem->mkdir($this->new_project_dir.'/var/cache');
-        $this->filesystem->mkdir($this->new_project_dir.'/var/log');
+        $this->filesystem->mkdir($this->new_project_dir.'/bin', 755);
+        $this->filesystem->mkdir($this->new_project_dir.'/src', 755);
+        $this->filesystem->mkdir($this->new_project_dir.'/public', 755);
+        $this->filesystem->mkdir($this->new_project_dir.'/templates', 0755);
+        $this->filesystem->mkdir($this->new_project_dir.'/translations', 0755);
+        $this->filesystem->mkdir($this->new_project_dir.'/migrations', 0755);
+
+        $this->filesystem->mkdir($this->new_project_dir.'/var/cache', 755);
+        $this->filesystem->mkdir($this->new_project_dir.'/var/log', 755);
+
+        $this->filesystem->mkdir($this->new_project_dir.'/config/packages/dev', 755);
+        $this->filesystem->mkdir($this->new_project_dir.'/config/packages/prod', 755);
+
+        $this->filesystem->mkdir($this->new_project_dir.'/config/routes/dev', 755);
+        $this->filesystem->mkdir($this->new_project_dir.'/config/routes/prod', 755);
 
         // Создаем cимволическую ссылку на vendor
         //$filesystem->symlink($this->project_dir.'/vendor', $this->new_project_dir.'/vendor', true);
