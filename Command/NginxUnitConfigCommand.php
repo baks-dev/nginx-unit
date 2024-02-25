@@ -139,11 +139,11 @@ class NginxUnitConfigCommand extends Command
         }
 
         /** Запрет доступа при обращении к определенным типам файлов */
-        if(!empty($data['dany']['types']))
+        if(!empty($data['dany']['arguments']))
         {
             $config["routes"][$routes]['match']['uri'] = array_map(function($item) {
-                return '*.'.$item.'*';
-            }, $data['dany']['types']);
+                return '*'.$item.'*';
+            }, $data['dany']['arguments']);
             $config["routes"][$routes]['action']['return'] = 403;
             $routes++;
         }

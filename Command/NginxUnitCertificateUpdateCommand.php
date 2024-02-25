@@ -40,11 +40,10 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
 
 #[AsCommand(
-    name: 'baks:nginx-unit:certificate',
-    description: 'Обновляет и присваивает сертификаты доменов',
-    aliases: ['baks:unit:cert']
+    name: 'baks:nginx-unit:cert:update',
+    description: 'Обновляет и присваивает сертификаты доменов Certbot'
 )]
-class NginxUnitCertificateCommand extends Command
+class NginxUnitCertificateUpdateCommand extends Command
 {
     private ParameterBagInterface $parameter;
     private ReloadConfig $reloadConfig;
@@ -82,23 +81,6 @@ class NginxUnitCertificateCommand extends Command
             return Command::SUCCESS;
         }
 
-//        $isTls = false;
-//
-//        foreach($data['listeners'] as $listener)
-//        {
-//            if(!empty($listener['tls']))
-//            {
-//                $isTls = true;
-//                break;
-//            }
-//        }
-//
-//        if(!$isTls)
-//        {
-//            $io->warning('Не найдено настроек сертификатов');
-//            return Command::SUCCESS;
-//        }
-
         $currentDate = new DateTimeImmutable();
         $filesystem = new Filesystem();
 
@@ -122,11 +104,11 @@ class NginxUnitCertificateCommand extends Command
             if(file_exists($cert))
             {
                 $modify = $currentDate->setTimestamp(filemtime($cert));
-                $lastModify = $modify->add(new DateInterval('P2M20D'));
+                $lastModify = $modify->add(new DateInterval('P2M'));
 
                 if($currentDate < $lastModify)
                 {
-                    $this->actualMessage($path, $domain, $modify, $io);
+                    $this->actualMessage($path, $domain, $headers['email'], $modify, $io);
                     continue;
                 }
             }
@@ -172,19 +154,16 @@ class NginxUnitCertificateCommand extends Command
                 if(file_exists($cert))
                 {
                     $modify = $currentDate->setTimestamp(filemtime($cert));
-                    $lastModify = $modify->add(new DateInterval('P2M20D'));
+                    $lastModify = $modify->add(new DateInterval('P2M'));
 
                     if($currentDate < $lastModify)
                     {
-                        $this->actualMessage($path, $subdomain, $modify, $io);
+                        $this->actualMessage($path, $subdomain, $headers['email'], $modify, $io);
                         continue;
                     }
                 }
 
                 $io->text(sprintf('Обновляем сертификат %s', $subdomain));
-
-                //                dump($subdomain);
-                //                dd($path.'public');
 
                 /* Обновляем сертификат Let's Encrypt */
                 $webroot = $this->certbotWebroot
@@ -205,7 +184,6 @@ class NginxUnitCertificateCommand extends Command
                     $this->updateCertificate->update($cert, $subdomain)->outputConsole($io);
                 }
             }
-
         }
 
         $this->reloadConfig->reload()->outputConsole($io);
@@ -214,24 +192,27 @@ class NginxUnitCertificateCommand extends Command
     }
 
 
-    private function actualMessage(string $path, string $domain, DateTimeImmutable $modify, SymfonyStyle $io): void
+    private function actualMessage(string $path, string $domain, string $email, DateTimeImmutable $modify, SymfonyStyle $io): void
     {
         $cert = $path.$domain.'.pem';
 
         $fullChain = sprintf('/etc/letsencrypt/live/%s/fullchain.pem', $domain);
         $privateKey = sprintf('/etc/letsencrypt/live/%s/privkey.pem', $domain);
 
-        $commandCertbot = sprintf('certbot certonly --webroot -w %s -d %s', $path, $domain);
+        //$commandCertbot = sprintf('certbot certonly --webroot -w %s -d %s', $path, $domain);
+        //$commandCertbot = sprintf('certbot certonly --force-renewal --webroot -w /home/bundles.baks.dev/public/ --email baksdevelopment@gmail.com --cert-name bundles.baks.dev', $path, $domain);
+        $commandCertbot = sprintf('certbot certonly --force-renewal --webroot -w %spublic/ --email %s --cert-name %s', $path, $email, $domain);
         $commandCat = sprintf('cat %s  %s > %s', $fullChain, $privateKey, $cert);
 
         $io->warning(
             sprintf('Сертификат %s в актуальном состоянии: %s', $domain, $modify->format('d.m.Y H:i:s'))
         );
 
-        $io->text('Для ручного обновления запустите комманду:');
+        $io->text('Для ручного обновления запустите комманды в следующем порядке:');
 
         $io->text('1. '.$commandCertbot);
         $io->text('2. '.$commandCat);
+        $io->text('3. php bin/console baks:nginx-unit:cert:reload');
 
     }
 

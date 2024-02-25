@@ -25,8 +25,10 @@ declare(strict_types=1);
 
 namespace BaksDev\Nginx\Unit\Process;
 
+use DomainException;
 use InvalidArgumentException;
 use phpDocumentor\Reflection\Types\This;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
@@ -41,6 +43,11 @@ final class CertbotWebroot
     private ?string $path = null;
 
     private bool $successful = true;
+    private LoggerInterface $logger;
+
+    public function __construct(LoggerInterface $nginxUnitLogger) {
+        $this->logger = $nginxUnitLogger;
+    }
 
 
     public function setPath(string $path): self
@@ -87,6 +94,12 @@ final class CertbotWebroot
             throw new InvalidArgumentException('Необходимо указать email для сертификации');
         }
 
+
+
+        // certbot certonly --force-renewal --webroot -w /home/bundles.baks.dev/public/ --email baksdevelopment@gmail.com --cert-name bundles.baks.dev
+        // cat /etc/letsencrypt/live/bundles.baks.dev/fullchain.pem  /etc/letsencrypt/live/bundles.baks.dev/privkey.pem > /home/bundles.baks.dev/bundles.baks.dev.pem
+
+
         $process = new Process(['certbot', 'certonly', '--force-renewal', '--webroot', '-w', $this->path.'public/', '--email', $this->email, '-d', $this->domain]);
         $process->start();
 
@@ -114,9 +127,6 @@ final class CertbotWebroot
     }
 
 
-
-
-
     /**
      * Сохраняет сертификат. Если не передан путь для сохранения - сохраняет в директорию домена
      */
@@ -126,9 +136,6 @@ final class CertbotWebroot
         {
             throw new InvalidArgumentException('Необходимо указать домены для сертификации');
         }
-
-
-        dump(sprintf('Сохраняем сертификат в директорию домена %s', $this->domain));
 
         $fullChain = sprintf('/etc/letsencrypt/live/%s/fullchain.pem', $this->domain);
         $privateKey = sprintf('/etc/letsencrypt/live/%s/privkey.pem', $this->domain);
@@ -160,13 +167,12 @@ final class CertbotWebroot
         if($dump)
         {
             $this->dumpFile($dump);
-            dump(sprintf('Сохранили сертификат %s', $this->path.$this->domain));
+            $this->logger->info(sprintf('Обновили сертификат %s', $this->path.$this->domain));
         }
         else
         {
-            dump(sprintf('НЕвозможно сохранить сертификат %s', $this->path.$this->domain));
+            throw new DomainException(sprintf('НЕвозможно сохранить сертификат %s', $this->path.$this->domain));
         }
-
 
         return $this;
     }

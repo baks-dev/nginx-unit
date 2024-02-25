@@ -33,7 +33,7 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
 
         Configuration\DomainConfig::domains($rootNode);
 
-        Configuration\DanyTypeConfig::dany($rootNode);
+        Configuration\DanyConfig::dany($rootNode);
 
         Configuration\StaticConfig::static($rootNode);
 

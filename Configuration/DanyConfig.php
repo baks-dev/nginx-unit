@@ -28,7 +28,7 @@ namespace BaksDev\Nginx\Unit\Configuration;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
-final class DanyTypeConfig
+final class DanyConfig
 {
 
     public static function dany(ArrayNodeDefinition|NodeDefinition $definition): void
@@ -49,36 +49,23 @@ final class DanyTypeConfig
         ;
 
         $danyNode
-            ->fixXmlConfig('type')
-            ->children()
-                ->arrayNode('types')
-                    ->scalarPrototype()->end()
-                ->end()
-            ->end()
-        ;
-
-
-        /*
-            {
-              "match": {
-                "source": [
-                  "192.0.0.99"
-                ]
-              },
-
-              "action": {
-                "return": 403
-              }
-            },
-        */
-        $danyNode
             ->fixXmlConfig('ip')
             ->children()
-                ->arrayNode('ips')
-                    ->scalarPrototype()->end()
-                ->end()
+            ->arrayNode('ips')
+            ->scalarPrototype()->end()
+            ->end()
             ->end()
         ;
+
+        $danyNode
+            ->fixXmlConfig('argument')
+            ->children()
+            ->arrayNode('arguments')
+            ->scalarPrototype()->end()
+            ->end()
+            ->end()
+        ;
+
 
 
         $rootArray->end();
