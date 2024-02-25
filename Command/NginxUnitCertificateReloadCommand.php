@@ -32,6 +32,7 @@ use DateTimeImmutable;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -124,6 +125,15 @@ class NginxUnitCertificateReloadCommand extends Command
             }
 
         }
+
+        /** Сбрасываем весь кеш */
+
+        $io->warning('На сброс кеша файла конфигурации Unit может потребоваться некоторое время!');
+
+        $command = ($this->getApplication())->get('baks:cache:clear');
+        $command->run($input, new NullOutput());
+
+        /** Обновляем конфигурацию сервера Unit */
 
         $this->reloadConfig->reload()->outputConsole($io);
 

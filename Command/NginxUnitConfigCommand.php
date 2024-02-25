@@ -41,8 +41,7 @@ use Symfony\Component\Process\Process;
 
 #[AsCommand(
     name: 'baks:nginx-unit:config',
-    description: 'Сохраняет файл конфигурации согласно настройкам',
-    aliases: ['baks:unit:config']
+    description: 'Сохраняет файл конфигурации согласно настройкам'
 )]
 class NginxUnitConfigCommand extends Command
 {
@@ -208,9 +207,6 @@ class NginxUnitConfigCommand extends Command
         }
 
 
-
-
-
         foreach($data['domains'] as $domain => $headers)
         {
             $hosts = [];
@@ -244,26 +240,15 @@ class NginxUnitConfigCommand extends Command
         fwrite($handle, json_encode($config));
         fclose($handle);
 
-        $process = new Process(['php', 'bin/console', 'cache:clear']);
-        $process->start();
-
-
-//        /** Индикатор процесса ... */
-//
-//        $progressIndicator = new ProgressIndicator($output, 'normal', 100, ['⠏', '⠛', '⠹', '⢸', '⣰', '⣤', '⣆', '⡇']);
-//        $progressIndicator->start('Processing...');
-//
-//        $i = 0;
-//        while ($i++ < 10) {
-//            $progressIndicator->advance();
-//            sleep(1);
-//        }
-//
-//        $progressIndicator->finish('Finished');
+        //$process = new Process(['php', $this->project_dir.'/bin/console', 'baks:cache:clear']);
+        //$process->start();
 
         $io->success('Файл конфигурации сервера Unit успешно обновлен');
 
         $io->warning('На сброс кеша файла конфигурации Unit может потребоваться некоторое время!');
+
+        $command = ($this->getApplication())->get('baks:cache:clear');
+        $command->run($input, new NullOutput());
 
         return Command::SUCCESS;
     }

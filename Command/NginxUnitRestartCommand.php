@@ -35,8 +35,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 #[AsCommand(
     name: 'baks:nginx-unit:restart',
-    description: '',
-    aliases: ['baks:unit:restart']
+    description: ''
 )]
 class NginxUnitRestartCommand extends Command
 {
@@ -67,10 +66,10 @@ class NginxUnitRestartCommand extends Command
 
         foreach($data['domains'] as $domain => $headers)
         {
+            $io->text($domain);
             $this->restartApplication->restart($domain)->outputConsole($io);
         }
 
         return Command::SUCCESS;
     }
-
 }

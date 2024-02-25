@@ -32,6 +32,7 @@ use DateTimeImmutable;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -54,7 +55,6 @@ class NginxUnitCertificateUpdateCommand extends Command
     public function __construct(
         ParameterBagInterface $parameter,
         CertbotWebroot $certbotWebroot,
-
         ReloadConfig $reloadConfig,
         DeleteCertificate $deleteCertificate,
         UpdateCertificate $updateCertificate
@@ -186,21 +186,35 @@ class NginxUnitCertificateUpdateCommand extends Command
             }
         }
 
+
+        /** Сбрасываем весь кеш */
+
+        $io->warning('На сброс кеша файла конфигурации Unit может потребоваться некоторое время!');
+
+        $command = ($this->getApplication())->get('baks:cache:clear');
+        $command->run($input, new NullOutput());
+
+        /** Обновляем конфигурацию сервера Unit */
+
         $this->reloadConfig->reload()->outputConsole($io);
 
         return Command::SUCCESS;
     }
 
 
-    private function actualMessage(string $path, string $domain, string $email, DateTimeImmutable $modify, SymfonyStyle $io): void
+    private function actualMessage(
+        string $path,
+        string $domain,
+        string $email,
+        DateTimeImmutable $modify,
+        SymfonyStyle $io
+    ): void
     {
         $cert = $path.$domain.'.pem';
 
         $fullChain = sprintf('/etc/letsencrypt/live/%s/fullchain.pem', $domain);
         $privateKey = sprintf('/etc/letsencrypt/live/%s/privkey.pem', $domain);
 
-        //$commandCertbot = sprintf('certbot certonly --webroot -w %s -d %s', $path, $domain);
-        //$commandCertbot = sprintf('certbot certonly --force-renewal --webroot -w /home/bundles.baks.dev/public/ --email baksdevelopment@gmail.com --cert-name bundles.baks.dev', $path, $domain);
         $commandCertbot = sprintf('certbot certonly --force-renewal --webroot -w %spublic/ --email %s --cert-name %s', $path, $email, $domain);
         $commandCat = sprintf('cat %s  %s > %s', $fullChain, $privateKey, $cert);
 
