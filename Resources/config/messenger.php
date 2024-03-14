@@ -44,5 +44,7 @@ return static function (FrameworkConfig $framework) {
     ;
 
     $messenger->transport('failed-nginx-unit')
-        ->dsn('%env(MESSENGER_TRANSPORT_DSN)%');
+        ->dsn('%env(MESSENGER_TRANSPORT_DSN)%')
+        ->options(['queue_name' => 'failed-nginx-unit'])
+    ;
 };
