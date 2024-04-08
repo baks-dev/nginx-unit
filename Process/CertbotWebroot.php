@@ -95,7 +95,6 @@ final class CertbotWebroot
         }
 
 
-
         // certbot certonly --force-renewal --webroot -w /home/bundles.baks.dev/public/ --email baksdevelopment@gmail.com --cert-name bundles.baks.dev
         // cat /etc/letsencrypt/live/bundles.baks.dev/fullchain.pem  /etc/letsencrypt/live/bundles.baks.dev/privkey.pem > /home/bundles.baks.dev/bundles.baks.dev.pem
 
@@ -103,16 +102,26 @@ final class CertbotWebroot
         $process = new Process(['certbot', 'certonly', '--force-renewal', '--webroot', '-w', $this->path.'public/', '--email', $this->email, '-d', $this->domain]);
         $process->start();
 
+        $commandCertbot = str_replace("'", '', $process->getCommandLine());
+
         if(!$io)
         {
             $process->wait();
             return $this;
         }
 
-        $process->wait(function($type, $buffer) use ($io): void {
+        $process->wait(function($type, $buffer) use ($io, $commandCertbot): void {
             if(Process::ERR === $type)
             {
-                $io->error($buffer);
+                if(stripos($buffer, 'Saving debug log') !== false)
+                {
+                    $io->text($buffer);
+                }
+                else
+                {
+                    $io->error($buffer);
+                    $io->warning('При первой установке и запуске Certbot необходимо согласие на условие использования: '.$commandCertbot);
+                }
             }
             else
             {

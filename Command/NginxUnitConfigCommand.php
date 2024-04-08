@@ -240,14 +240,14 @@ class NginxUnitConfigCommand extends Command
         fwrite($handle, json_encode($config));
         fclose($handle);
 
-        //$process = new Process(['php', $this->project_dir.'/bin/console', 'baks:cache:clear']);
+        //$process = new Process(['php', $this->project_dir.'/bin/console', 'cache:clear']);
         //$process->start();
 
         $io->success('Файл конфигурации сервера Unit успешно обновлен');
 
         $io->warning('На сброс кеша файла конфигурации Unit может потребоваться некоторое время!');
 
-        $command = ($this->getApplication())->get('baks:cache:clear');
+        $command = ($this->getApplication())->get('cache:clear');
         $command->run($input, new NullOutput());
 
         return Command::SUCCESS;

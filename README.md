@@ -1,6 +1,6 @@
 # BaksDev Nginx Unit
 
-[![Version](https://img.shields.io/badge/version-7.0.18-blue)](https://github.com/baks-dev/nginx-unit/releases)
+[![Version](https://img.shields.io/badge/version-7.0.19-blue)](https://github.com/baks-dev/nginx-unit/releases)
 ![php 8.2+](https://img.shields.io/badge/php-min%208.1-red.svg)
 
 Модуль управления сервером Nginx Unit
@@ -10,6 +10,12 @@
 ``` bash
 $ composer require baks-dev/nginx-unit
 ```
+
+## Важно!
+
+При первой установке и запуске Certbot необходимо согласие на условие использования. Запускаем и соглашаемся в консоли:
+
+certbot certonly --force-renewal --webroot -w /.....PATH_TO_PROJECT..../public/ --email <MY_EMAIL> -d <MY_DOMAIN>
 
 ## Дополнительно
 

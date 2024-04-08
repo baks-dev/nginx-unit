@@ -130,7 +130,7 @@ class NginxUnitCertificateReloadCommand extends Command
 
         $io->warning('На сброс кеша файла конфигурации Unit может потребоваться некоторое время!');
 
-        $command = ($this->getApplication())->get('baks:cache:clear');
+        $command = ($this->getApplication())->get('cache:clear');
         $command->run($input, new NullOutput());
 
         /** Обновляем конфигурацию сервера Unit */
