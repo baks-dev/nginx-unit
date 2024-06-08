@@ -17,6 +17,10 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 final class BaksDevNginxUnitBundle extends AbstractBundle
 {
 
+    public const NAMESPACE = __NAMESPACE__.'\\';
+
+    public const PATH = __DIR__.DIRECTORY_SEPARATOR;
+
     public function configure(DefinitionConfigurator $definition): void
     {
         //dump('configure');
@@ -50,24 +54,24 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
 //        ;
     }
 
-    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder) : void
-    {
-        $path = __DIR__.'/Resources/config/';
-
-        /** @var DirectoryIterator $config */
-        foreach(new DirectoryIterator($path) as $config)
-        {
-            if($config->isDot() || $config->isDir())
-            {
-                continue;
-            }
-
-            if($config->isFile() && $config->getExtension() === 'php' && $config->getFilename() !== 'routes.php')
-            {
-                $container->import($config->getRealPath());
-            }
-        }
-    }
+//    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder) : void
+//    {
+//        $path = __DIR__.'/Resources/config/';
+//
+//        /** @var DirectoryIterator $config */
+//        foreach(new DirectoryIterator($path) as $config)
+//        {
+//            if($config->isDot() || $config->isDir())
+//            {
+//                continue;
+//            }
+//
+//            if($config->isFile() && $config->getExtension() === 'php' && $config->getFilename() !== 'routes.php')
+//            {
+//                $container->import($config->getRealPath());
+//            }
+//        }
+//    }
 
 
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
