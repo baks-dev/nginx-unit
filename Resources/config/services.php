@@ -30,8 +30,7 @@ return static function (ContainerConfigurator $configurator) {
     $services = $configurator->services()
         ->defaults()
         ->autowire()
-        ->autoconfigure()
-    ;
+        ->autoconfigure();
 
     $NAMESPACE = BaksDevNginxUnitBundle::NAMESPACE;
     $PATH = BaksDevNginxUnitBundle::PATH;
@@ -39,8 +38,8 @@ return static function (ContainerConfigurator $configurator) {
     $services->load($NAMESPACE, $PATH)
         ->exclude([
             $PATH.'{Entity,Resources,Type}',
-            $PATH.'**/*Message.php',
-            $PATH.'**/*DTO.php',
-        ])
-    ;
+            $PATH.'**'.DIRECTORY_SEPARATOR.'*Message.php',
+            $PATH.'**'.DIRECTORY_SEPARATOR.'*DTO.php',
+            $PATH.'**'.DIRECTORY_SEPARATOR.'*Test.php',
+        ]);
 };
