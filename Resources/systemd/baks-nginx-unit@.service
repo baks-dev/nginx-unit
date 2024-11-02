@@ -10,7 +10,7 @@
 # systemctl stop baks-orders-order@1.service
 
 [Unit]
-Description=Symfony messenger orders-order %i
+Description=orders-order
 StartLimitBurst=5
 StartLimitIntervalSec=0
 
