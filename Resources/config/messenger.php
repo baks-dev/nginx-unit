@@ -43,6 +43,18 @@ return static function (FrameworkConfig $framework) {
 
     ;
 
+    $messenger
+        ->transport('nginx-unit-low')
+        ->dsn('%env(MESSENGER_TRANSPORT_DSN)%')
+        ->options(['queue_name' => 'nginx-unit'])
+        ->failureTransport('failed-nginx-unit')
+        ->retryStrategy()
+        ->maxRetries(1)
+        ->delay(1000)
+        ->maxDelay(1)
+        ->multiplier(2)
+        ->service(null);
+
     $failure = $framework->messenger();
 
     $failure->transport('failed-nginx-unit')
