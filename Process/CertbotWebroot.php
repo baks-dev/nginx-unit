@@ -27,10 +27,9 @@ namespace BaksDev\Nginx\Unit\Process;
 
 use DomainException;
 use InvalidArgumentException;
-use phpDocumentor\Reflection\Types\This;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
@@ -43,11 +42,10 @@ final class CertbotWebroot
     private ?string $path = null;
 
     private bool $successful = true;
-    private LoggerInterface $logger;
 
-    public function __construct(LoggerInterface $nginxUnitLogger) {
-        $this->logger = $nginxUnitLogger;
-    }
+    public function __construct(
+        #[Target('nginxUnitLogger')] private readonly LoggerInterface $logger,
+    ) {}
 
 
     public function setPath(string $path): self
@@ -104,7 +102,7 @@ final class CertbotWebroot
             '--force-renewal',
             '--webroot',
             '-w', $this->path.'public/',
-            '--email',  $this->email,
+            '--email', $this->email,
             '-d', $this->domain
         ];
 
@@ -179,8 +177,10 @@ final class CertbotWebroot
 
         $dump = null;
 
-        foreach ($process as $type => $data) {
-            if ($process::OUT === $type) {
+        foreach($process as $type => $data)
+        {
+            if($process::OUT === $type)
+            {
                 $dump .= $data;
             }
         }

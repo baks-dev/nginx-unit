@@ -1,7 +1,7 @@
 # BaksDev Nginx Unit
 
-[![Version](https://img.shields.io/badge/version-7.1.9-blue)](https://github.com/baks-dev/nginx-unit/releases)
-![php 8.3+](https://img.shields.io/badge/php-min%208.3-red.svg)
+[![Version](https://img.shields.io/badge/version-7.2.0-blue)](https://github.com/baks-dev/nginx-unit/releases)
+![php 8.4+](https://img.shields.io/badge/php-min%208.4-red.svg)
 
 Модуль управления сервером Nginx Unit
 
