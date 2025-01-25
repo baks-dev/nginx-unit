@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace BaksDev\Nginx\Unit;
 
 use BaksDev\Nginx\Unit\DependencyInjection\BaksDevNginxUnitExtension;
-use DirectoryIterator;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
-use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
 final class BaksDevNginxUnitBundle extends AbstractBundle
 {
@@ -20,7 +19,6 @@ final class BaksDevNginxUnitBundle extends AbstractBundle
 
     public function configure(DefinitionConfigurator $definition): void
     {
-        //dump('configure');
 
         $rootNode = $definition->rootNode();
 
